@@ -4,131 +4,81 @@
     box-sizing: border-box;
 }
 
-/* 明亮主背景與 app 風格容器 */
+/* 明亮主背景微調（更純淨）*/
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(180deg, #f6fbff 0%, #ffffff 100%);
+    background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 40px 20px;
+    padding: 48px 20px;
 }
 
-/* 1Page App：寬版兩欄（棋盤 + 側欄資訊）*/
+/* 1Page App：稍微增大側欄並微調間距 */
 .container {
     background: #ffffff;
     border-radius: 14px;
-    padding: 28px;
+    padding: 30px;
     box-shadow: 0 8px 30px rgba(33, 47, 60, 0.08);
     max-width: 980px;
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 22px;
+    grid-template-columns: 1fr 360px;
+    gap: 26px;
     align-items: start;
 }
 
-/* 標題更清爽 */
+/* 標題色調微調與間距 */
 h1 {
     text-align: left;
-    color: #1e6fd8;
-    margin-bottom: 14px;
+    color: #0f4da5;
+    margin-bottom: 18px;
+    letter-spacing: 0.2px;
     font-size: 1.8em;
     font-weight: 700;
     text-shadow: none;
 }
 
-/* 狀態區塊：輕量背景與圓角 */
-.status {
-    text-align: center;
-    font-size: 1.05em;
-    font-weight: 600;
-    color: #0f3b75;
-    margin-bottom: 12px;
-    padding: 12px 14px;
-    background: #eef6ff;
-    border-radius: 10px;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(30, 111, 216, 0.08);
-}
-
-.status.winner {
-    background: #e6f9ee;
-    color: #166534;
-    box-shadow: 0 6px 18px rgba(46, 125, 50, 0.06);
-    animation: pulse 0.45s ease-in-out;
-}
-
-.status.draw {
-    background: #fff4e6;
-    color: #9a5800;
-}
-
-/* 分數卡片：側欄風格 */
-.score {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    background: transparent;
-    padding: 8px 0;
-    border-radius: 10px;
-    font-weight: 700;
-    color: #444;
-    align-items: stretch;
-}
-
-.score span {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: #fbfcff;
-    border-radius: 10px;
-    border: 1px solid rgba(30,111,216,0.06);
-}
-
-.score span span {
-    color: #1e6fd8;
-    font-size: 1.4em;
-}
-
-/* 棋盤：去除深色背景，使用卡片式白底 */
+/* 讓左側內容看起來更集中：棋盤置中與最大寬度 */
 .board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin: 12px 0;
+    gap: 14px;
+    margin: 14px auto 0;
     background: transparent;
-    padding: 6px;
+    padding: 8px;
     border-radius: 12px;
+    max-width: 460px;
 }
 
-/* 格子樣式：淺色卡片 + 微陰影 */
+/* 以變數控制格子大小，便於未來微調 */
+:root {
+    --cell-size: 3.4rem;
+}
+
+/* 格子字型與尺寸更一致 */
 .cell {
     aspect-ratio: 1;
     background: #ffffff;
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 3.2em;
+    font-size: calc(var(--cell-size) * 1);
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     color: #1f2937;
     border: 1px solid rgba(15,23,39,0.04);
     box-shadow: 0 4px 10px rgba(15,23,39,0.04);
+    min-width: 84px; /* 幫助在大螢幕維持方形外觀 */
+    min-height: 84px;
 }
 
 .cell:hover:not(.taken) {
-    background: #fbfdff;
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(15,23,39,0.06);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(15,23,39,0.06);
 }
 
 .cell.taken {
@@ -155,17 +105,17 @@ h1 {
 /* 控制列與按鈕：更應用程式風格 */
 .controls {
     display: flex;
-    gap: 12px;
-    margin-bottom: 10px;
+    gap: 14px;
+    margin-top: 12px;
 }
 
 button {
     flex: 1;
-    padding: 12px 18px;
-    font-size: 1em;
+    padding: 12px 22px;
+    font-size: 0.98em;
     font-weight: 700;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
     color: white;
@@ -206,14 +156,22 @@ button {
 @media (max-width: 780px) {
     .container {
         display: block;
-        padding: 20px;
+        padding: 18px;
     }
-    h1 {
-        text-align: center;
+    .board {
+        max-width: 360px;
+        margin: 12px auto 0;
+        gap: 10px;
+    }
+    :root {
+        --cell-size: 2.6rem;
     }
     .score {
-        flex-direction: row;
-        justify-content: space-between;
-        gap: 8px;
+        position: relative;
+        top: 0;
+        box-shadow: none;
+        border: 1px solid rgba(15,23,39,0.03);
+        padding: 10px;
+        margin-top: 12px;
     }
 }
