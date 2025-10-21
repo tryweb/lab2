@@ -1,6 +1,6 @@
 services:
   tic-tac-toe:
-    image: ghcr.io/tryweb/202510_lab1:latest
+    image: ghcr.io/tryweb/lab2:latest
     container_name: tic-tac-toe-game
     ports:
       - "8080:8080"

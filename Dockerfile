@@ -19,7 +19,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 RUN sed -i 's/listen\s*80;/listen 8080;/g' /etc/nginx/conf.d/default.conf && \
     sed -i 's/listen\s*\[::\]:80;/listen [::]:8080;/g' /etc/nginx/conf.d/default.conf && \
     sed -i '/user\s*nginx;/d' /etc/nginx/nginx.conf && \
-    sed -i 's,/var/run/nginx.pid,/tmp/nginx.pid,' /etc/nginx/nginx.conf && \
+    # 同時替換 /var/run/nginx.pid 與 /run/nginx.pid 為 /tmp/nginx.pid
+    sed -i 's,/var/run/nginx.pid,/tmp/nginx.pid,g' /etc/nginx/nginx.conf && \
+    sed -i 's,/run/nginx.pid,/tmp/nginx.pid,g' /etc/nginx/nginx.conf && \
     sed -i "/^http {/a \    proxy_temp_path /tmp/proxy_temp;\n    client_body_temp_path /tmp/client_temp;\n    fastcgi_temp_path /tmp/fastcgi_temp;\n    uwsgi_temp_path /tmp/uwsgi_temp;\n    scgi_temp_path /tmp/scgi_temp;\n" /etc/nginx/nginx.conf
 
 # 暴露 8080 端口（非特權端口）
@@ -27,8 +29,8 @@ EXPOSE 8080
 
 # 新增非 root 使用者並調整必要目錄權限，確保 nginx 可以在非 root 身份下運行
 RUN addgroup -S appuser && adduser -S -G appuser appuser && \
-    mkdir -p /var/cache/nginx /tmp && \
-    chown -R appuser:appuser /usr/share/nginx/html /var/cache/nginx /tmp
+    mkdir -p /var/cache/nginx /tmp /run && \
+    chown -R appuser:appuser /usr/share/nginx/html /var/cache/nginx /tmp /run
 
 # 使用非 root 使用者執行容器
 USER appuser
