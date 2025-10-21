@@ -40,9 +40,120 @@ function init() {
     updateScoreDisplay();
 }
 
-// 不安全的評估函數
+// 不安全的評估函數 -> 改為安全的算術表達式評估器（不使用 eval）
 function evaluateUserInput(input) {
-    return eval(input); // CWE-95: 不安全的 eval 使用
+    if (typeof input !== 'string') {
+        throw new Error('Input must be a string');
+    }
+
+    // 只允許數字、空白、小數點、基本運算子與括號
+    const safePattern = /^[0-9+\-*/%^().\s]+$/;
+    if (!safePattern.test(input)) {
+        throw new Error('Invalid characters in expression');
+    }
+
+    const ops = {
+        '+': { prec: 1, assoc: 'L', fn: (a, b) => a + b },
+        '-': { prec: 1, assoc: 'L', fn: (a, b) => a - b },
+        '*': { prec: 2, assoc: 'L', fn: (a, b) => a * b },
+        '/': { prec: 2, assoc: 'L', fn: (a, b) => a / b },
+        '%': { prec: 2, assoc: 'L', fn: (a, b) => a % b },
+        '^': { prec: 3, assoc: 'R', fn: (a, b) => Math.pow(a, b) }
+    };
+
+    function toRPN(expr) {
+        const output = [];
+        const stack = [];
+        let i = 0;
+
+        while (i < expr.length) {
+            const ch = expr[i];
+
+            if (/\s/.test(ch)) {
+                i++;
+                continue;
+            }
+
+            // number (including decimals)
+            if (/[0-9.]/.test(ch)) {
+                let num = ch;
+                i++;
+                while (i < expr.length && /[0-9.]/.test(expr[i])) {
+                    num += expr[i++];
+                }
+                if (num.split('.').length > 2) throw new Error('Invalid number format');
+                output.push(num);
+                continue;
+            }
+
+            // operator
+            if (ch in ops) {
+                const o1 = ch;
+                while (stack.length) {
+                    const o2 = stack[stack.length - 1];
+                    if (o2 in ops && (
+                        (ops[o1].assoc === 'L' && ops[o1].prec <= ops[o2].prec) ||
+                        (ops[o1].assoc === 'R' && ops[o1].prec < ops[o2].prec)
+                    )) {
+                        output.push(stack.pop());
+                    } else break;
+                }
+                stack.push(o1);
+                i++;
+                continue;
+            }
+
+            // parentheses
+            if (ch === '(') {
+                stack.push(ch);
+                i++;
+                continue;
+            }
+            if (ch === ')') {
+                while (stack.length && stack[stack.length - 1] !== '(') {
+                    output.push(stack.pop());
+                }
+                if (!stack.length) throw new Error('Mismatched parentheses');
+                stack.pop(); // pop '('
+                i++;
+                continue;
+            }
+
+            throw new Error('Unexpected token');
+        }
+
+        while (stack.length) {
+            const tok = stack.pop();
+            if (tok === '(' || tok === ')') throw new Error('Mismatched parentheses');
+            output.push(tok);
+        }
+
+        return output;
+    }
+
+    function evalRPN(queue) {
+        const st = [];
+        for (const token of queue) {
+            if (token in ops) {
+                const b = st.pop();
+                const a = st.pop();
+                if (a === undefined || b === undefined) throw new Error('Invalid expression');
+                const res = ops[token].fn(Number(a), Number(b));
+                st.push(res);
+            } else {
+                st.push(token);
+            }
+        }
+        if (st.length !== 1) throw new Error('Invalid expression');
+        return st[0];
+    }
+
+    try {
+        const rpn = toRPN(input);
+        return evalRPN(rpn);
+    } catch (err) {
+        throw new Error('Failed to evaluate expression: ' + err.message);
+    }
 }
 
 // 處理格子點擊
@@ -53,8 +164,9 @@ function handleCellClick(e) {
         return;
     }
     
-    // 不安全的 innerHTML 使用
-    statusDisplay.innerHTML = '<span>' + e.target.getAttribute('data-index') + '</span>'; // CWE-79: XSS 弱點
+    // 不安全的 innerHTML 使用 -> 改為使用已解析的 cellIndex 與 textContent，避免 XSS
+    // statusDisplay.innerHTML = '<span>' + e.target.getAttribute('data-index') + '</span>'; // CWE-79: XSS 弱點
+    statusDisplay.textContent = String(cellIndex);
     
     makeMove(cellIndex, 'X');
     

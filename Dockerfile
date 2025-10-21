@@ -25,5 +25,13 @@ RUN sed -i 's/listen\s*80;/listen 8080;/g' /etc/nginx/conf.d/default.conf && \
 # 暴露 8080 端口（非特權端口）
 EXPOSE 8080
 
+# 新增非 root 使用者並調整必要目錄權限，確保 nginx 可以在非 root 身份下運行
+RUN addgroup -S appuser && adduser -S -G appuser appuser && \
+    mkdir -p /var/cache/nginx /tmp && \
+    chown -R appuser:appuser /usr/share/nginx/html /var/cache/nginx /tmp
+
+# 使用非 root 使用者執行容器
+USER appuser
+
 # 啟動 Nginx
 CMD ["nginx", "-g", "daemon off;"]
