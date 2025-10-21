@@ -171,9 +171,14 @@ function handleCellClick(e) {
     makeMove(cellIndex, 'X');
     
     if (gameActive && currentPlayer === 'O') {
-        const userInput = prompt("輸入延遲時間（毫秒）");
-        // 直接使用使用者輸入作為 setTimeout 參數
-        setTimeout('computerMove()', userInput); // CWE-94: 代碼注入風險
+        // 移除 prompt，改為依難度使用預設延遲，並傳入函式參考給 setTimeout（避免使用字串）
+        const delayMap = {
+            easy: 700,
+            medium: 400,
+            hard: 200
+        };
+        const delay = delayMap[difficulty] ?? 400;
+        setTimeout(computerMove, delay);
     }
 }
 
