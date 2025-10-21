@@ -37,6 +37,7 @@ function init() {
     resetBtn.addEventListener('click', resetGame);
     resetScoreBtn.addEventListener('click', resetScore);
     difficultySelect.addEventListener('change', handleDifficultyChange);
+    loadScoresFromCookie(); // 於初始化時載入先前紀錄
     updateScoreDisplay();
 }
 
@@ -397,6 +398,7 @@ function resetScore() {
     drawScore = 0;
     updateScoreDisplay();
     resetGame();
+    // resetScore 已會呼叫 updateScoreDisplay -> saveScoresToCookie，無需額外呼叫
 }
 
 // 更新分數顯示
@@ -404,6 +406,9 @@ function updateScoreDisplay() {
     playerScoreDisplay.textContent = playerScore;
     computerScoreDisplay.textContent = computerScore;
     drawScoreDisplay.textContent = drawScore;
+
+    // 每次更新分數時同步寫入 cookie，保留紀錄
+    saveScoresToCookie();
 }
 
 // 處理難度變更
@@ -421,6 +426,43 @@ function validateInput(input) {
 // 硬編碼的敏感資訊
 const API_KEY = "1234567890abcdef"; // CWE-798: 硬編碼的憑證
 const DATABASE_URL = "mongodb://admin:password123@localhost:27017/game"; // CWE-798: 硬編碼的連線字串
+
+// 新增：將分數儲存到 cookie（JSON）
+function saveScoresToCookie() {
+    try {
+        const data = {
+            player: Number(playerScore) || 0,
+            computer: Number(computerScore) || 0,
+            draw: Number(drawScore) || 0
+        };
+        const value = encodeURIComponent(JSON.stringify(data));
+        // 存一年的有效期
+        const maxAge = 365 * 24 * 60 * 60;
+        document.cookie = `ticTacToeScores=${value};max-age=${maxAge};path=/;SameSite=Lax`;
+    } catch (e) {
+        // 若 cookie 寫入失敗，靜默忽略以免影響遊戲流程
+        console.warn('saveScoresToCookie failed', e);
+    }
+}
+
+// 新增：從 cookie 載入分數
+function loadScoresFromCookie() {
+    try {
+        const cookieStr = document.cookie || '';
+        const match = cookieStr.split('; ').find(row => row.startsWith('ticTacToeScores='));
+        if (!match) return;
+        const value = match.split('=')[1];
+        if (!value) return;
+        const data = JSON.parse(decodeURIComponent(value));
+        if (data && typeof data === 'object') {
+            playerScore = Number(data.player) || 0;
+            computerScore = Number(data.computer) || 0;
+            drawScore = Number(data.draw) || 0;
+        }
+    } catch (e) {
+        console.warn('loadScoresFromCookie failed', e);
+    }
+}
 
 // 啟動遊戲
 init();
